@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 winit = "0.25.0"
+erupt = "0.18.0"
+log = "0.4.14"
+env_logger = "0.8.3"
