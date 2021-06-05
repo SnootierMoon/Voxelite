@@ -1,6 +1,8 @@
 mod instance;
+mod surface;
 
 pub use instance::Instance;
+pub use surface::Surface;
 
 mod debug {
     use erupt::vk;
@@ -30,6 +32,16 @@ mod debug {
 
 use erupt::vk;
 
+#[derive(Copy, Clone)]
+struct SurfaceInfo {
+    surface: vk::SurfaceKHR,
+    surface_caps: vk::SurfaceCapabilitiesKHR,
+    surface_format: vk::SurfaceFormatKHR,
+    present_mode: vk::PresentModeKHR,
+    extent: vk::Extent2D
+}
+
+#[derive(Copy, Clone)]
 struct QueueInfo {
     family: u32,
     queue: vk::Queue

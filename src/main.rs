@@ -15,7 +15,9 @@ fn main() {
         .unwrap();
 
     let instance = render::Instance::new(&window);
+    let surface = render::Surface::new(instance.clone(), &window);
 
+    std::mem::drop(surface);
     std::mem::drop(instance);
 
     event_loop.run(move |event, _, control_flow| match event {

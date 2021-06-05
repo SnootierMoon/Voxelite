@@ -4,8 +4,6 @@ version = "0.0.1"
 authors = ["Akshay Trivedi"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 winit = "0.25.0"
 erupt = "0.18.0"

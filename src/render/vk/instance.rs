@@ -12,6 +12,7 @@ pub struct Instance {
     // Box: https://gitlab.com/Friz64/erupt/-/commit/8f62ff07c127850378feb15bcc60cab91ca284f2
     device: Box<erupt::DeviceLoader>,
     instance: Box<erupt::InstanceLoader>,
+    #[allow(dead_code)]
     entry: erupt::DefaultEntryLoader
 }
 
@@ -140,6 +141,85 @@ impl Instance {
             present: super::QueueInfo { family: present_family, queue: present_queue },
         };
         std::rc::Rc::new(ret)
+    }
+
+    pub fn device(&self) -> &erupt::DeviceLoader { &self.device }
+    pub(super) fn graphics(&self) -> super::QueueInfo { self.graphics }
+    pub(super) fn present(&self) -> super::QueueInfo { self.present }
+
+    pub(super) fn surface_info(&self, extent: winit::dpi::PhysicalSize<u32>) -> super::SurfaceInfo {
+        let surface_caps = unsafe {
+            self.instance.get_physical_device_surface_capabilities_khr(
+                self.physical_device,
+                self.surface,
+                None,
+            )
+        }
+            .unwrap();
+
+        let surface_formats = unsafe {
+            self.instance.get_physical_device_surface_formats_khr(
+                self.physical_device,
+                self.surface,
+                None,
+            )
+        }
+            .unwrap();
+        let surface_format = surface_formats
+            .iter()
+            .cloned()
+            .find(|surface_format| {
+                surface_format.format == vk::Format::B8G8R8A8_SRGB
+                    && surface_format.color_space == vk::ColorSpaceKHR::SRGB_NONLINEAR_KHR
+            })
+            .unwrap_or(surface_formats[0]);
+
+        let present_modes = unsafe {
+            self.instance.get_physical_device_surface_present_modes_khr(
+                self.physical_device,
+                self.surface,
+                None,
+            )
+        }
+            .unwrap();
+        let present_mode = present_modes
+            .into_iter()
+            .find(|&present_mode| present_mode == vk::PresentModeKHR::MAILBOX_KHR)
+            .unwrap_or(vk::PresentModeKHR::FIFO_KHR);
+
+        let extent = vk::Extent2D {
+            width: extent.width.clamp(
+                surface_caps.min_image_extent.width,
+                surface_caps.max_image_extent.width,
+            ),
+            height: extent.height.clamp(
+                surface_caps.min_image_extent.height,
+                surface_caps.max_image_extent.height,
+            ),
+        };
+
+        super::SurfaceInfo {
+            surface: self.surface,
+            surface_caps,
+            surface_format,
+            present_mode,
+            extent
+        }
+    }
+
+    pub fn get_memory_type_index(
+        &self,
+        properties: vk::MemoryPropertyFlags,
+        requirements: vk::MemoryRequirements,
+    ) -> u32 {
+        (0..self.memory_properties.memory_type_count)
+            .find(|i| {
+                (((requirements.memory_type_bits >> i) & 1) != 0)
+                    && self.memory_properties.memory_types[*i as usize]
+                    .property_flags
+                    .contains(properties)
+            })
+            .unwrap()
     }
 }
 
