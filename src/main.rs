@@ -16,7 +16,9 @@ fn main() {
 
     let instance = render::Instance::new(&window);
     let surface = render::Surface::new(instance.clone(), &window);
+    let renderer = render::Renderer::new(&surface);
 
+    std::mem::drop(renderer);
     std::mem::drop(surface);
     std::mem::drop(instance);
 

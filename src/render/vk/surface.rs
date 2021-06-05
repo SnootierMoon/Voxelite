@@ -186,6 +186,8 @@ impl Surface {
             swapchain_images,
         }
     }
+
+    pub fn instance(&self) -> std::rc::Rc<super::Instance> { self.instance.clone() }
 }
 
 impl Drop for Surface {
