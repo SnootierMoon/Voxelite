@@ -58,6 +58,54 @@ impl Renderer {
             current_frame: 0,
         }
     }
+
+    pub fn render<Recorder: FnOnce(vk::CommandBuffer)>(
+        &mut self,
+        surface: &mut super::Surface,
+        recorder: Recorder,
+    ) -> bool {
+        self.current_frame = (self.current_frame + 1) % self.syncs.len();
+        let device = self.instance.device();
+        let sync = &self.syncs[self.current_frame];
+        let command_buffer_begin_info = vk::CommandBufferBeginInfoBuilder::new()
+            .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
+
+        unsafe { device.wait_for_fences(&[sync.in_flight], true, u64::MAX) }.unwrap();
+
+        surface.borrow_image(sync, |render_pass_begin_info| {
+            unsafe {
+                device
+                    .begin_command_buffer(sync.command_buffer, &command_buffer_begin_info)
+                    .unwrap();
+                device.cmd_begin_render_pass(
+                    sync.command_buffer,
+                    &render_pass_begin_info,
+                    vk::SubpassContents::INLINE,
+                );
+                recorder(sync.command_buffer);
+                device.cmd_end_render_pass(sync.command_buffer);
+                device.end_command_buffer(sync.command_buffer).unwrap()
+            }
+
+            unsafe { device.reset_fences(&[sync.in_flight]) }.unwrap();
+
+            let submit_info = vk::SubmitInfoBuilder::new()
+                .wait_semaphores(std::slice::from_ref(
+                    &sync.image_available
+                ))
+                .wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
+                .command_buffers(std::slice::from_ref(&sync.command_buffer))
+                .signal_semaphores(std::slice::from_ref(&sync.render_finished));
+            unsafe {
+                device.queue_submit(
+                    self.instance.graphics().queue,
+                    &[submit_info],
+                    Some(sync.in_flight),
+                )
+            }
+                .unwrap();
+        })
+    }
 }
 
 

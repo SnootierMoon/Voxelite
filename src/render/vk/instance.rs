@@ -52,7 +52,7 @@ impl Instance {
             (instance, vk::DebugUtilsMessengerEXT::null())
         };
 
-        // Create SurfaceKHR
+        // Create Surface
 
         let surface = unsafe {
             erupt::utils::surface::create_surface(&instance, window, None)
@@ -98,7 +98,6 @@ impl Instance {
                 _ => 2,
             })
             .unwrap();
-
 
         // Get Physical Device Memory Properties
 
@@ -220,6 +219,10 @@ impl Instance {
                     .contains(properties)
             })
             .unwrap()
+    }
+
+    pub fn wait_idle(&self) {
+        unsafe { self.device.device_wait_idle() }.unwrap();
     }
 }
 

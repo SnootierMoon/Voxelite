@@ -7,7 +7,8 @@ pub struct Surface {
     depth_image: vk::Image,
     depth_image_memory: vk::DeviceMemory,
     depth_image_view: vk::ImageView,
-    swapchain_images: Vec<SwapchainImage>
+    swapchain_images: Vec<SwapchainImage>,
+    extent: vk::Extent2D
 }
 
 impl Surface {
@@ -184,10 +185,82 @@ impl Surface {
             depth_image_memory,
             depth_image_view,
             swapchain_images,
+            extent: surface_info.extent
         }
     }
 
     pub fn instance(&self) -> std::rc::Rc<super::Instance> { self.instance.clone() }
+
+    pub(super) fn borrow_image<F: FnOnce(vk::RenderPassBeginInfoBuilder)>(&mut self, sync: &super::SyncObject, f: F) -> bool {
+        let device = self.instance.device();
+
+        // Acquire Image from Swapchain
+
+        let index = match unsafe {
+            device.acquire_next_image_khr(self.swapchain, u64::MAX, Some(sync.image_available), None, None)
+        }.result() {
+            Ok(x) => x as usize,
+            Err(vk::Result::SUBOPTIMAL_KHR) | Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {
+                return false;
+            }
+            Err(e) => panic!("{}", e),
+        };
+        if !self.swapchain_images[index].fence.is_null() {
+            unsafe { device.wait_for_fences(&[self.swapchain_images[index].fence], true, u64::MAX) }
+                .unwrap()
+        };
+        self.swapchain_images[index].fence = sync.in_flight;
+
+        // Run Callback
+
+        const CLEAR_VALUES: [vk::ClearValue; 2] = [
+            vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.0, 0.0, 0.0, 0.0],
+                },
+            },
+            vk::ClearValue {
+                depth_stencil: vk::ClearDepthStencilValue {
+                    depth: 1.0,
+                    stencil: 0,
+                },
+            },
+        ];
+        let render_pass_begin_info = vk::RenderPassBeginInfoBuilder::new()
+            .render_pass(self.render_pass)
+            .framebuffer(self.swapchain_images[index].framebuffer)
+            .render_area(vk::Rect2D {
+                offset: vk::Offset2D { x: 0, y: 0 },
+                extent: self.extent,
+            })
+            .clear_values(&CLEAR_VALUES);
+        f(render_pass_begin_info);
+
+        // Present Image
+
+        let image_index = index as u32;
+        let present_info = vk::PresentInfoKHRBuilder::new()
+            .wait_semaphores(std::slice::from_ref(&sync.render_finished))
+            .swapchains(std::slice::from_ref(&self.swapchain))
+            .image_indices(std::slice::from_ref(&image_index));
+        match unsafe { device.queue_present_khr(self.instance.present().queue, &present_info) }.result() {
+            Ok(_) => (),
+            Err(vk::Result::SUBOPTIMAL_KHR) | Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {
+                return false;
+            }
+            Err(e) => panic!("{}", e),
+        };
+
+        true
+    }
+
+    pub fn rebuild(&mut self, window: &winit::window::Window) {
+        let instance = self.instance.clone();
+        unsafe {
+            std::mem::drop(std::ptr::read(self));
+            std::ptr::write(self, Self::new(instance, window))
+        }
+    }
 }
 
 impl Drop for Surface {

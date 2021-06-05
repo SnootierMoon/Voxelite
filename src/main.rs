@@ -10,25 +10,29 @@ fn main() {
     let event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_inner_size(winit::dpi::LogicalSize::new(1280, 800))
-        .with_title("sex lol")
+        .with_title("vulkan demo")
         .build(&event_loop)
         .unwrap();
 
     let instance = render::Instance::new(&window);
-    let surface = render::Surface::new(instance.clone(), &window);
-    let renderer = render::Renderer::new(&surface);
-
-    std::mem::drop(renderer);
-    std::mem::drop(surface);
-    std::mem::drop(instance);
+    let mut surface = render::Surface::new(instance.clone(), &window);
+    let mut renderer = render::Renderer::new(&surface);
 
     event_loop.run(move |event, _, control_flow| match event {
         winit::event::Event::WindowEvent { event, .. } => match event {
-            winit::event::WindowEvent::CloseRequested => {
-                *control_flow = winit::event_loop::ControlFlow::Exit
-            }
+            winit::event::WindowEvent::CloseRequested => *control_flow = winit::event_loop::ControlFlow::Exit,
             _ => ()
         }
+        winit::event::Event::MainEventsCleared => window.request_redraw(),
+        winit::event::Event::RedrawRequested(_) => {
+            if !renderer.render(&mut surface, |_| {
+            }) {
+                instance.wait_idle();
+                surface.rebuild(&window);
+            }
+        },
+        winit::event::Event::LoopDestroyed => instance.wait_idle(),
         _ => ()
     })
+
 }
