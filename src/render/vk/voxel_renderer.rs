@@ -155,7 +155,7 @@ impl VoxelRenderer {
                 command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline,
-            );;
+            );
             device.cmd_push_constants(
                 command_buffer,
                 self.layout,
