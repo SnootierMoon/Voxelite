@@ -13,13 +13,14 @@ pub struct Instance {
     device: Box<erupt::DeviceLoader>,
     instance: Box<erupt::InstanceLoader>,
     #[allow(dead_code)]
-    entry: erupt::DefaultEntryLoader
+    entry: erupt::DefaultEntryLoader,
 }
 
 impl Instance {
     pub fn new(window: &winit::window::Window) -> std::rc::Rc<Self> {
         let entry = erupt::EntryLoader::new().unwrap();
-        let mut instance_extensions = erupt::utils::surface::enumerate_required_extensions(window).unwrap();
+        let mut instance_extensions =
+            erupt::utils::surface::enumerate_required_extensions(window).unwrap();
         let mut instance_layers = Vec::new();
         let device_extensions = vec![vk::KHR_SWAPCHAIN_EXTENSION_NAME];
         let mut device_layers = Vec::new();
@@ -42,7 +43,8 @@ impl Instance {
             let instance = erupt::InstanceLoader::new(&entry, &instance_create_info, None).unwrap();
             let messenger = unsafe {
                 instance.create_debug_utils_messenger_ext(&messenger_create_info, None, None)
-            }.unwrap();
+            }
+            .unwrap();
             (instance, messenger)
         } else {
             let instance_create_info = vk::InstanceCreateInfoBuilder::new()
@@ -54,9 +56,8 @@ impl Instance {
 
         // Create Surface
 
-        let surface = unsafe {
-            erupt::utils::surface::create_surface(&instance, window, None)
-        }.unwrap();
+        let surface =
+            unsafe { erupt::utils::surface::create_surface(&instance, window, None) }.unwrap();
 
         // Find Physical Device & Queue Families
 
@@ -78,7 +79,7 @@ impl Instance {
                             None,
                         )
                     }
-                        .unwrap()
+                    .unwrap()
                 }) {
                     Some(index) => index as u32,
                     None => return None,
@@ -136,15 +137,27 @@ impl Instance {
             surface,
             physical_device,
             memory_properties,
-            graphics: super::QueueInfo { family: graphics_family, queue: graphics_queue },
-            present: super::QueueInfo { family: present_family, queue: present_queue },
+            graphics: super::QueueInfo {
+                family: graphics_family,
+                queue: graphics_queue,
+            },
+            present: super::QueueInfo {
+                family: present_family,
+                queue: present_queue,
+            },
         };
         std::rc::Rc::new(ret)
     }
 
-    pub fn device(&self) -> &erupt::DeviceLoader { &self.device }
-    pub(super) fn graphics(&self) -> super::QueueInfo { self.graphics }
-    pub(super) fn present(&self) -> super::QueueInfo { self.present }
+    pub fn device(&self) -> &erupt::DeviceLoader {
+        &self.device
+    }
+    pub(super) fn graphics(&self) -> super::QueueInfo {
+        self.graphics
+    }
+    pub(super) fn present(&self) -> super::QueueInfo {
+        self.present
+    }
 
     pub(super) fn surface_info(&self, extent: winit::dpi::PhysicalSize<u32>) -> super::SurfaceInfo {
         let surface_caps = unsafe {
@@ -154,7 +167,7 @@ impl Instance {
                 None,
             )
         }
-            .unwrap();
+        .unwrap();
 
         let surface_formats = unsafe {
             self.instance.get_physical_device_surface_formats_khr(
@@ -163,7 +176,7 @@ impl Instance {
                 None,
             )
         }
-            .unwrap();
+        .unwrap();
         let surface_format = surface_formats
             .iter()
             .cloned()
@@ -180,7 +193,7 @@ impl Instance {
                 None,
             )
         }
-            .unwrap();
+        .unwrap();
         let present_mode = present_modes
             .into_iter()
             .find(|&present_mode| present_mode == vk::PresentModeKHR::MAILBOX_KHR)
@@ -202,7 +215,7 @@ impl Instance {
             surface_caps,
             surface_format,
             present_mode,
-            extent
+            extent,
         }
     }
 
@@ -215,8 +228,8 @@ impl Instance {
             .find(|i| {
                 (((requirements.memory_type_bits >> i) & 1) != 0)
                     && self.memory_properties.memory_types[*i as usize]
-                    .property_flags
-                    .contains(properties)
+                        .property_flags
+                        .contains(properties)
             })
             .unwrap()
     }
@@ -232,7 +245,8 @@ impl Drop for Instance {
             self.device.destroy_device(None);
             self.instance.destroy_surface_khr(Some(self.surface), None);
             if !self.messenger.is_null() {
-                self.instance.destroy_debug_utils_messenger_ext(Some(self.messenger), None)
+                self.instance
+                    .destroy_debug_utils_messenger_ext(Some(self.messenger), None)
             }
             self.instance.destroy_instance(None)
         }

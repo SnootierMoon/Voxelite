@@ -1,21 +1,15 @@
 use erupt::vk;
 
-const FACES: [u32; 26] = [17, 21, 26, 29, 81, 85, 88, 93, 152, 154, 157, 209, 216, 218, 273, 277, 280, 281, 282, 285, 337, 341, 344, 345, 346, 349];
+const FACES: [u32; 26] = [
+    17, 21, 26, 29, 81, 85, 88, 93, 152, 154, 157, 209, 216, 218, 273, 277, 280, 281, 282, 285,
+    337, 341, 344, 345, 346, 349,
+];
 
 pub struct VoxelRenderer {
     instance: std::rc::Rc<super::Instance>,
     layout: vk::PipelineLayout,
     pipeline: vk::Pipeline,
-    extent: vk::Extent2D,
     mesh: VoxelMesh,
-
-    time: std::time::SystemTime,
-}
-
-pub struct VoxelMesh {
-    vertex_buffer: vk::Buffer,
-    vertex_buffer_memory: vk::DeviceMemory,
-    length: u32
 }
 
 impl VoxelRenderer {
@@ -150,41 +144,25 @@ impl VoxelRenderer {
             instance,
             layout,
             pipeline,
-            extent: render_info.extent,
             mesh,
-            time: std::time::SystemTime::now(),
         }
     }
 
-    pub fn render(&mut self, command_buffer: vk::CommandBuffer) {
+    pub fn render(&mut self, command_buffer: vk::CommandBuffer, matrix: &ultraviolet::Mat4) {
         let device = self.instance.device();
         unsafe {
             device.cmd_bind_pipeline(
                 command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline,
-            );
-            let u = self.time.elapsed().unwrap().as_secs_f32() * 3.0;
-            let x = ultraviolet::projection::perspective_infinite_z_vk(
-                45f32,
-                self.extent.width as f32 / self.extent.height as f32,
-                0.1,
-            ) * ultraviolet::Mat4::look_at(
-                ultraviolet::Vec3::new(
-                    5f32 * u.sin() + 1f32,
-                    2f32 * (u * std::f32::consts::PI).sin() + 1f32,
-                    5f32 * u.cos() + 1f32,
-                ),
-                ultraviolet::Vec3::new(1f32, 1f32, 1f32),
-                ultraviolet::Vec3::new(0f32, 1f32, 0f32),
-            );
+            );;
             device.cmd_push_constants(
                 command_buffer,
                 self.layout,
                 vk::ShaderStageFlags::VERTEX,
                 0,
                 64,
-                x.as_ptr() as *const std::ffi::c_void,
+                matrix.as_ptr() as *const std::ffi::c_void,
             );
 
             device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.mesh.vertex_buffer], &[0]);
@@ -212,6 +190,12 @@ impl Drop for VoxelRenderer {
     }
 }
 
+pub struct VoxelMesh {
+    vertex_buffer: vk::Buffer,
+    vertex_buffer_memory: vk::DeviceMemory,
+    length: u32,
+}
+
 impl VoxelMesh {
     pub fn from_faces(instance: std::rc::Rc<super::Instance>, faces: &[u32]) -> Self {
         let device = instance.device();
@@ -221,13 +205,9 @@ impl VoxelMesh {
             .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
 
-        let vertex_buffer = unsafe {
-            device.create_buffer(&buffer_info, None, None)
-        }.unwrap();
+        let vertex_buffer = unsafe { device.create_buffer(&buffer_info, None, None) }.unwrap();
 
-        let requirements = unsafe {
-            device.get_buffer_memory_requirements(vertex_buffer, None)
-        };
+        let requirements = unsafe { device.get_buffer_memory_requirements(vertex_buffer, None) };
 
         let memory_type_index = instance.get_memory_type_index(
             vk::MemoryPropertyFlags::HOST_COHERENT | vk::MemoryPropertyFlags::HOST_VISIBLE,
@@ -238,38 +218,24 @@ impl VoxelMesh {
             .allocation_size(requirements.size)
             .memory_type_index(memory_type_index);
 
-        let vertex_buffer_memory = unsafe {
-            device.allocate_memory(&memory_info, None, None)
-        }.unwrap();
+        let vertex_buffer_memory =
+            unsafe { device.allocate_memory(&memory_info, None, None) }.unwrap();
 
-        unsafe {
-            device.bind_buffer_memory(vertex_buffer, vertex_buffer_memory, 0)
-        }.unwrap();
+        unsafe { device.bind_buffer_memory(vertex_buffer, vertex_buffer_memory, 0) }.unwrap();
 
         let mut memory: *mut std::ffi::c_void = std::ptr::null_mut::<std::ffi::c_void>();
 
-        unsafe {
-            device.map_memory(
-                vertex_buffer_memory,
-                0,
-                buffer_info.size,
-                None,
-                &mut memory
-            )
-        }.unwrap();
+        unsafe { device.map_memory(vertex_buffer_memory, 0, buffer_info.size, None, &mut memory) }
+            .unwrap();
 
-        unsafe {
-            std::ptr::copy_nonoverlapping(faces.as_ptr(), memory.cast(), faces.len())
-        };
+        unsafe { std::ptr::copy_nonoverlapping(faces.as_ptr(), memory.cast(), faces.len()) };
 
-        unsafe {
-            device.unmap_memory(vertex_buffer_memory)
-        };
+        unsafe { device.unmap_memory(vertex_buffer_memory) };
 
         Self {
             vertex_buffer,
             vertex_buffer_memory,
-            length: faces.len() as u32
+            length: faces.len() as u32,
         }
     }
 }

@@ -90,9 +90,7 @@ impl Renderer {
             unsafe { device.reset_fences(&[sync.in_flight]) }.unwrap();
 
             let submit_info = vk::SubmitInfoBuilder::new()
-                .wait_semaphores(std::slice::from_ref(
-                    &sync.image_available
-                ))
+                .wait_semaphores(std::slice::from_ref(&sync.image_available))
                 .wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
                 .command_buffers(std::slice::from_ref(&sync.command_buffer))
                 .signal_semaphores(std::slice::from_ref(&sync.render_finished));
@@ -103,11 +101,10 @@ impl Renderer {
                     Some(sync.in_flight),
                 )
             }
-                .unwrap();
+            .unwrap();
         })
     }
 }
-
 
 impl Drop for Renderer {
     fn drop(&mut self) {

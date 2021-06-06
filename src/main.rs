@@ -1,4 +1,5 @@
 mod render;
+mod window;
 
 const DEBUG_MODE: bool = cfg!(debug_assertions);
 
@@ -7,35 +8,31 @@ fn main() {
         .filter_level(log::LevelFilter::max())
         .init();
 
-    let event_loop = winit::event_loop::EventLoop::new();
-    let window = winit::window::WindowBuilder::new()
-        .with_inner_size(winit::dpi::LogicalSize::new(1280, 800))
-        .with_title("voxel render demo")
-        .build(&event_loop)
-        .unwrap();
+    let window = window::Window::new();
 
-    let instance = render::Instance::new(&window);
-    let mut surface = render::Surface::new(instance.clone(), &window);
+    let instance = render::Instance::new(window.window());
+    let mut surface = render::Surface::new(instance.clone(), window.window());
     let mut renderer = render::Renderer::new(&surface);
     let mut voxel_renderer = render::VoxelRenderer::new(&surface);
 
-    event_loop.run(move |event, _, control_flow| match event {
-        winit::event::Event::WindowEvent { event, .. } => match event {
-            winit::event::WindowEvent::CloseRequested => {
-                *control_flow = winit::event_loop::ControlFlow::Exit
-            }
-            _ => (),
-        },
-        winit::event::Event::MainEventsCleared => {
-            if !renderer.render(&mut surface, |command_buffer| {
-                voxel_renderer.render(command_buffer)
-            }) {
-                instance.wait_idle();
-                surface.rebuild(&window);
-                voxel_renderer.rebuild(&surface)
-            }
+    let mut camera = render::Camera::new(ultraviolet::Vec3::new(-5., 0., 0.), 0., 0.);
+
+    window.run(move |state, window| {
+        if state.quit() {
+            instance.wait_idle();
+            return
         }
-        winit::event::Event::LoopDestroyed => instance.wait_idle(),
-        _ => (),
-    })
+
+        camera.pos_mut().x -= state.frame_elapsed().as_secs_f32();
+
+        let matrix = camera.matrix(45., surface.aspect_ratio());
+
+        if !renderer.render(&mut surface, |command_buffer| {
+            voxel_renderer.render(command_buffer, &matrix)
+        }) {
+            instance.wait_idle();
+            surface.rebuild(window.window());
+            voxel_renderer.rebuild(&surface)
+        }
+    });
 }

@@ -8,7 +8,7 @@ pub struct Surface {
     depth_image_memory: vk::DeviceMemory,
     depth_image_view: vk::ImageView,
     swapchain_images: Vec<SwapchainImage>,
-    extent: vk::Extent2D
+    extent: vk::Extent2D,
 }
 
 impl Surface {
@@ -78,7 +78,10 @@ impl Surface {
         let (sharing_mode, queue_families) = if graphics.family == present.family {
             (vk::SharingMode::EXCLUSIVE, vec![graphics.family])
         } else {
-            (vk::SharingMode::CONCURRENT, vec![graphics.family, present.family])
+            (
+                vk::SharingMode::CONCURRENT,
+                vec![graphics.family, present.family],
+            )
         };
         let min_image_count = surface_info.surface_caps.min_image_count;
         let swapchain_create_info = vk::SwapchainCreateInfoKHRBuilder::new()
@@ -118,8 +121,8 @@ impl Surface {
         let depth_image = unsafe { device.create_image(&image_create_info, None, None) }.unwrap();
         let memory_requirements =
             unsafe { device.get_image_memory_requirements(depth_image, None) };
-        let memory_type_index =
-            instance.get_memory_type_index(vk::MemoryPropertyFlags::DEVICE_LOCAL, memory_requirements);
+        let memory_type_index = instance
+            .get_memory_type_index(vk::MemoryPropertyFlags::DEVICE_LOCAL, memory_requirements);
         let memory_allocate_info = vk::MemoryAllocateInfoBuilder::new()
             .allocation_size(memory_requirements.size)
             .memory_type_index(memory_type_index);
@@ -185,20 +188,34 @@ impl Surface {
             depth_image_memory,
             depth_image_view,
             swapchain_images,
-            extent: surface_info.extent
+            extent: surface_info.extent,
         }
     }
 
-    pub fn instance(&self) -> std::rc::Rc<super::Instance> { self.instance.clone() }
+    pub fn instance(&self) -> std::rc::Rc<super::Instance> {
+        self.instance.clone()
+    }
 
-    pub(super) fn borrow_image<F: FnOnce(vk::RenderPassBeginInfoBuilder)>(&mut self, sync: &super::SyncObject, f: F) -> bool {
+    pub(super) fn borrow_image<F: FnOnce(vk::RenderPassBeginInfoBuilder)>(
+        &mut self,
+        sync: &super::SyncObject,
+        f: F,
+    ) -> bool {
         let device = self.instance.device();
 
         // Acquire Image from Swapchain
 
         let index = match unsafe {
-            device.acquire_next_image_khr(self.swapchain, u64::MAX, Some(sync.image_available), None, None)
-        }.result() {
+            device.acquire_next_image_khr(
+                self.swapchain,
+                u64::MAX,
+                Some(sync.image_available),
+                None,
+                None,
+            )
+        }
+        .result()
+        {
             Ok(x) => x as usize,
             Err(vk::Result::SUBOPTIMAL_KHR) | Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {
                 return false;
@@ -243,7 +260,9 @@ impl Surface {
             .wait_semaphores(std::slice::from_ref(&sync.render_finished))
             .swapchains(std::slice::from_ref(&self.swapchain))
             .image_indices(std::slice::from_ref(&image_index));
-        match unsafe { device.queue_present_khr(self.instance.present().queue, &present_info) }.result() {
+        match unsafe { device.queue_present_khr(self.instance.present().queue, &present_info) }
+            .result()
+        {
             Ok(_) => (),
             Err(vk::Result::SUBOPTIMAL_KHR) | Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {
                 return false;
@@ -257,7 +276,7 @@ impl Surface {
     pub(super) fn render_info(&self) -> super::RenderInfo {
         super::RenderInfo {
             render_pass: self.render_pass,
-            extent: self.extent
+            extent: self.extent,
         }
     }
 
@@ -268,6 +287,8 @@ impl Surface {
             std::ptr::write(self, Self::new(instance, window))
         }
     }
+
+    pub fn aspect_ratio(&self) -> f32 { self.extent.width as f32 / self.extent.height as f32 }
 }
 
 impl Drop for Surface {

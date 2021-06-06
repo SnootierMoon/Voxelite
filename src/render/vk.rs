@@ -1,11 +1,11 @@
 mod instance;
-mod surface;
 mod renderer;
+mod surface;
 mod voxel_renderer;
 
 pub use instance::Instance;
-pub use surface::Surface;
 pub use renderer::Renderer;
+pub use surface::Surface;
 pub use voxel_renderer::VoxelRenderer;
 
 mod debug {
@@ -42,13 +42,13 @@ struct SurfaceInfo {
     surface_caps: vk::SurfaceCapabilitiesKHR,
     surface_format: vk::SurfaceFormatKHR,
     present_mode: vk::PresentModeKHR,
-    extent: vk::Extent2D
+    extent: vk::Extent2D,
 }
 
 #[derive(Copy, Clone)]
 struct QueueInfo {
     family: u32,
-    queue: vk::Queue
+    queue: vk::Queue,
 }
 
 #[derive(Copy, Clone)]
@@ -62,5 +62,5 @@ struct SyncObject {
 #[derive(Copy, Clone)]
 struct RenderInfo {
     render_pass: vk::RenderPass,
-    extent: vk::Extent2D
+    extent: vk::Extent2D,
 }
