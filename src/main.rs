@@ -1,9 +1,12 @@
 mod render;
 mod window;
+mod voxel;
 
 const DEBUG_MODE: bool = cfg!(debug_assertions);
 
 fn main() {
+    let chunk = voxel::Chunk::test1();
+
     env_logger::builder()
         .filter_level(log::LevelFilter::max())
         .init();
@@ -13,7 +16,7 @@ fn main() {
     let instance = render::Instance::new(window.window());
     let mut surface = render::Surface::new(instance.clone(), window.window());
     let mut renderer = render::Renderer::new(&surface);
-    let mut voxel_renderer = render::VoxelRenderer::new(&surface);
+    let mut voxel_renderer = render::VoxelRenderer::new(&surface, &chunk.faces());
 
     let mut camera = render::PlayerCamera::new(ultraviolet::Vec3::new(-5., 0., 0.), 0., 0.);
 
@@ -23,7 +26,7 @@ fn main() {
             return
         }
 
-        camera.update(&state);
+        camera.update(state);
         let matrix = camera.matrix(45., surface.aspect_ratio());
 
         if !renderer.render(&mut surface, |command_buffer| {
@@ -31,7 +34,7 @@ fn main() {
         }) {
             instance.wait_idle();
             surface.rebuild(window.window());
-            voxel_renderer.rebuild(&surface)
+            voxel_renderer.rebuild(&surface, &chunk.faces())
         }
     });
 }

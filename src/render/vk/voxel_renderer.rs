@@ -1,10 +1,5 @@
 use erupt::vk;
 
-const FACES: [u32; 26] = [
-    17, 21, 26, 29, 81, 85, 88, 93, 152, 154, 157, 209, 216, 218, 273, 277, 280, 281, 282, 285,
-    337, 341, 344, 345, 346, 349,
-];
-
 pub struct VoxelRenderer {
     instance: std::rc::Rc<super::Instance>,
     layout: vk::PipelineLayout,
@@ -16,7 +11,7 @@ impl VoxelRenderer {
     const VOXEL_FRAG: &'static [u32] = vk_shader_macros::include_glsl!("src/shaders/voxel.frag");
     const VOXEL_VERT: &'static [u32] = vk_shader_macros::include_glsl!("src/shaders/voxel.vert");
 
-    pub fn new(surface: &super::Surface) -> Self {
+    pub fn new(surface: &super::Surface, faces: &[u32]) -> Self {
         let instance = surface.instance();
         let device = instance.device();
         let render_info = surface.render_info();
@@ -138,7 +133,7 @@ impl VoxelRenderer {
             device.destroy_shader_module(Some(frag_shader_module), None);
         }
 
-        let mesh = VoxelMesh::from_faces(instance.clone(), &FACES);
+        let mesh = VoxelMesh::from_faces(instance.clone(), &faces);
 
         Self {
             instance,
@@ -170,10 +165,10 @@ impl VoxelRenderer {
         }
     }
 
-    pub fn rebuild(&mut self, surface: &super::Surface) {
+    pub fn rebuild(&mut self, surface: &super::Surface, faces: &[u32]) {
         unsafe {
             std::mem::drop(std::ptr::read(self));
-            std::ptr::write(self, Self::new(surface))
+            std::ptr::write(self, Self::new(surface, faces))
         }
     }
 }

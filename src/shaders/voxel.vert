@@ -28,9 +28,9 @@ mat4(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)  // -z
 );
 
 void main() {
-    uint direction = bitfieldExtract(data, 6, 3);
+    uint direction = bitfieldExtract(data, 15, 3);
 
-    vec4 chunkCubeCoord = vec4(bitfieldExtract(data, 0, 2), bitfieldExtract(data, 2, 2), bitfieldExtract(data, 4, 2), 0);
+    vec4 chunkCubeCoord = vec4(bitfieldExtract(data, 0, 5), bitfieldExtract(data, 5, 5), bitfieldExtract(data, 10, 5), 0);
     vec4 faceVertexCoord = vec4(cornerIndicesI[gl_VertexIndex], cornerIndicesJ[gl_VertexIndex], 0.5, 1);
     vec4 cubeVertexCoord = faceTransforms[direction] * faceVertexCoord;
     vec4 vertexChunkCoord = chunkCubeCoord + cubeVertexCoord;
