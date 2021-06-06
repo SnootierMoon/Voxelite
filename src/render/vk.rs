@@ -1,10 +1,12 @@
 mod instance;
 mod surface;
 mod renderer;
+mod voxel_renderer;
 
 pub use instance::Instance;
 pub use surface::Surface;
 pub use renderer::Renderer;
+pub use voxel_renderer::VoxelRenderer;
 
 mod debug {
     use erupt::vk;
@@ -55,4 +57,10 @@ struct SyncObject {
     image_available: vk::Semaphore,
     render_finished: vk::Semaphore,
     command_buffer: vk::CommandBuffer,
+}
+
+#[derive(Copy, Clone)]
+struct RenderInfo {
+    render_pass: vk::RenderPass,
+    extent: vk::Extent2D
 }

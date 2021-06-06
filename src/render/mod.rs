@@ -1,5 +1,3 @@
 mod vk;
 
-pub use vk::Instance;
-pub use vk::Surface;
-pub use vk::Renderer;
+pub use vk::{Instance, Surface, Renderer, VoxelRenderer};

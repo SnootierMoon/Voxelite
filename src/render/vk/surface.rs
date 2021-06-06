@@ -254,6 +254,13 @@ impl Surface {
         true
     }
 
+    pub(super) fn render_info(&self) -> super::RenderInfo {
+        super::RenderInfo {
+            render_pass: self.render_pass,
+            extent: self.extent
+        }
+    }
+
     pub fn rebuild(&mut self, window: &winit::window::Window) {
         let instance = self.instance.clone();
         unsafe {

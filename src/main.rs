@@ -10,29 +10,32 @@ fn main() {
     let event_loop = winit::event_loop::EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_inner_size(winit::dpi::LogicalSize::new(1280, 800))
-        .with_title("vulkan demo")
+        .with_title("voxel render demo")
         .build(&event_loop)
         .unwrap();
 
     let instance = render::Instance::new(&window);
     let mut surface = render::Surface::new(instance.clone(), &window);
     let mut renderer = render::Renderer::new(&surface);
+    let mut voxel_renderer = render::VoxelRenderer::new(&surface);
 
     event_loop.run(move |event, _, control_flow| match event {
         winit::event::Event::WindowEvent { event, .. } => match event {
-            winit::event::WindowEvent::CloseRequested => *control_flow = winit::event_loop::ControlFlow::Exit,
-            _ => ()
-        }
-        winit::event::Event::MainEventsCleared => window.request_redraw(),
-        winit::event::Event::RedrawRequested(_) => {
-            if !renderer.render(&mut surface, |_| {
+            winit::event::WindowEvent::CloseRequested => {
+                *control_flow = winit::event_loop::ControlFlow::Exit
+            }
+            _ => (),
+        },
+        winit::event::Event::MainEventsCleared => {
+            if !renderer.render(&mut surface, |command_buffer| {
+                voxel_renderer.render(command_buffer)
             }) {
                 instance.wait_idle();
                 surface.rebuild(&window);
+                voxel_renderer.rebuild(&surface)
             }
-        },
+        }
         winit::event::Event::LoopDestroyed => instance.wait_idle(),
-        _ => ()
+        _ => (),
     })
-
 }

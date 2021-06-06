@@ -7,5 +7,9 @@ edition = "2018"
 [dependencies]
 winit = "0.25.0"
 erupt = "0.18.0"
+
 log = "0.4.14"
 env_logger = "0.8.3"
+
+ultraviolet = "0.8.1"
+vk-shader-macros = "0.2.7"
