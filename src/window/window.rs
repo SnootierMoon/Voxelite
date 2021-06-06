@@ -22,6 +22,29 @@ impl Window {
         &self.window
     }
 
+    pub fn size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.window.inner_size()
+    }
+
+    pub fn center(&self) -> winit::dpi::PhysicalPosition<u32> {
+        let size = self.window.inner_size();
+        winit::dpi::PhysicalPosition::new(size.width / 2, size.height / 2)
+    }
+
+    pub(super) fn set_input_mode(&self, input_mode: super::InputMode) {
+        match input_mode {
+            super::InputMode::CAM3D => {
+                self.window.set_cursor_visible(false);
+                self.window.set_cursor_grab(true).unwrap();
+            }
+            super::InputMode::MOUSE => {
+                self.window.set_cursor_position(self.center()).unwrap();
+                self.window.set_cursor_visible(true);
+                self.window.set_cursor_grab(false).unwrap();
+            }
+        }
+    }
+
     pub fn run<InputHandler: 'static + FnMut(&super::State, &Self)>(
         mut self,
         mut input_handler: InputHandler,
@@ -31,17 +54,17 @@ impl Window {
             None => return,
         };
 
-        let mut state = super::State::new();
+        let mut state = super::State::new(&self);
 
-        event_loop.run(move |event, _, control_flow| match event {
-            _ => {
-                state.handle_event(&event);
-                if state.quit() { *control_flow = winit::event_loop::ControlFlow::Exit }
-                if state.main() {
-                    input_handler(&state, &self);
-                    state.reset()
-                }
-            },
+        event_loop.run(move |event, _, control_flow| {
+            state.handle_event(&self, event);
+            if state.quit() {
+                *control_flow = winit::event_loop::ControlFlow::Exit
+            }
+            if state.main() {
+                input_handler(&state, &self);
+                state.reset()
+            }
         })
     }
 }

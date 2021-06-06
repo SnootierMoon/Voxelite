@@ -1,6 +1,6 @@
 #[derive(Default)]
 pub struct Chunk {
-    blocks: Box<[[[super::Block; Self::SIZE]; Self::SIZE]; Self::SIZE]>
+    blocks: Box<[[[super::Block; Self::SIZE]; Self::SIZE]; Self::SIZE]>,
 }
 
 impl Chunk {
@@ -13,7 +13,11 @@ impl Chunk {
         for x in 0..Self::SIZE {
             for y in 0..Self::SIZE {
                 for z in 0..Self::SIZE {
-                    if (ultraviolet::Vec3::new(x as f32, y as f32, z as f32) - ultraviolet::Vec3::new(16., 16., 16.)).mag_sq() < 16.*16. {
+                    if (ultraviolet::Vec3::new(x as f32, y as f32, z as f32)
+                        - ultraviolet::Vec3::new(16., 16., 16.))
+                    .mag_sq()
+                        < 16. * 16.
+                    {
                         chunk.blocks[x][y][z] = 1
                     }
                 }
@@ -44,12 +48,24 @@ impl Chunk {
             for y in 0..Self::SIZE {
                 for z in 0..Self::SIZE {
                     if self.get2(x, y, z) {
-                        if !self.get2(x+1, y, z) { faces.push(Self::face(x, y, z, 0)) }
-                        if !self.get2(x-1, y, z) { faces.push(Self::face(x, y, z, 1)) }
-                        if !self.get2(x, y+1, z) { faces.push(Self::face(x, y, z, 2)) }
-                        if !self.get2(x, y-1, z) { faces.push(Self::face(x, y, z, 3)) }
-                        if !self.get2(x, y, z+1) { faces.push(Self::face(x, y, z, 4)) }
-                        if !self.get2(x, y, z-1) { faces.push(Self::face(x, y, z, 5)) }
+                        if !self.get2(x + 1, y, z) {
+                            faces.push(Self::face(x, y, z, 0))
+                        }
+                        if !self.get2(x - 1, y, z) {
+                            faces.push(Self::face(x, y, z, 1))
+                        }
+                        if !self.get2(x, y + 1, z) {
+                            faces.push(Self::face(x, y, z, 2))
+                        }
+                        if !self.get2(x, y - 1, z) {
+                            faces.push(Self::face(x, y, z, 3))
+                        }
+                        if !self.get2(x, y, z + 1) {
+                            faces.push(Self::face(x, y, z, 4))
+                        }
+                        if !self.get2(x, y, z - 1) {
+                            faces.push(Self::face(x, y, z, 5))
+                        }
                     }
                 }
             }
@@ -71,7 +87,7 @@ impl Chunk {
 pub struct Coord {
     pub x: usize,
     pub y: usize,
-    pub z: usize
+    pub z: usize,
 }
 
 impl Coord {

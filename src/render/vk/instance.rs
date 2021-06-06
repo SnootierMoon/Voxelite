@@ -159,7 +159,7 @@ impl Instance {
         self.present
     }
 
-    pub(super) fn surface_info(&self, extent: winit::dpi::PhysicalSize<u32>) -> super::SurfaceInfo {
+    pub(super) fn surface_info(&self, (width, height): (u32, u32)) -> super::SurfaceInfo {
         let surface_caps = unsafe {
             self.instance.get_physical_device_surface_capabilities_khr(
                 self.physical_device,
@@ -200,11 +200,11 @@ impl Instance {
             .unwrap_or(vk::PresentModeKHR::FIFO_KHR);
 
         let extent = vk::Extent2D {
-            width: extent.width.clamp(
+            width: width.clamp(
                 surface_caps.min_image_extent.width,
                 surface_caps.max_image_extent.width,
             ),
-            height: extent.height.clamp(
+            height: height.clamp(
                 surface_caps.min_image_extent.height,
                 surface_caps.max_image_extent.height,
             ),

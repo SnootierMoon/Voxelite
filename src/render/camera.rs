@@ -11,22 +11,24 @@ impl PlayerCamera {
         }
     }
 
+    const MOVE_KEYS: [winit::event::VirtualKeyCode; 6] = [
+        winit::event::VirtualKeyCode::W,
+        winit::event::VirtualKeyCode::S,
+        winit::event::VirtualKeyCode::A,
+        winit::event::VirtualKeyCode::D,
+        winit::event::VirtualKeyCode::Space,
+        winit::event::VirtualKeyCode::LShift,
+    ];
+
     pub fn update(&mut self, state: &crate::window::State) {
         let mouse_rel = state.mouse_rel() / 60.;
         self.camera.orientation -= mouse_rel;
         self.camera.clamp_orientation();
 
-        let vel = ultraviolet::Vec3::new(
-            (state.key_held(winit::event::VirtualKeyCode::W) as i32
-                - state.key_held(winit::event::VirtualKeyCode::S) as i32) as f32,
-            (state.key_held(winit::event::VirtualKeyCode::A) as i32
-                - state.key_held(winit::event::VirtualKeyCode::D) as i32) as f32,
-            (state.key_held(winit::event::VirtualKeyCode::Space) as i32
-                - state.key_held(winit::event::VirtualKeyCode::LShift) as i32) as f32,
-        );
-
-        self.camera.pos +=
-            self.camera.move_matrix() * vel * 30. * state.frame_elapsed().as_secs_f32();
+        self.camera.pos += self.camera.move_matrix()
+            * state.move_vector(&Self::MOVE_KEYS)
+            * 30.
+            * state.frame_elapsed().as_secs_f32();
     }
 
     pub fn matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {
@@ -37,7 +39,7 @@ impl PlayerCamera {
 #[derive(Default)]
 pub struct Camera {
     pos: ultraviolet::Vec3,
-    orientation: ultraviolet::Vec2 // (yaw, pitch)
+    orientation: ultraviolet::Vec2, // (yaw, pitch)
 }
 
 impl Camera {
@@ -47,7 +49,7 @@ impl Camera {
     pub fn new(pos: ultraviolet::Vec3, yaw: f32, pitch: f32) -> Self {
         Self {
             pos,
-            orientation: ultraviolet::Vec2::new(yaw, pitch)
+            orientation: ultraviolet::Vec2::new(yaw, pitch),
         }
     }
 

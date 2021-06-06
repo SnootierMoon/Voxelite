@@ -12,10 +12,10 @@ pub struct Surface {
 }
 
 impl Surface {
-    pub fn new(instance: std::rc::Rc<super::Instance>, window: &winit::window::Window) -> Self {
+    pub fn new(instance: std::rc::Rc<super::Instance>, window: &crate::window::Window) -> Self {
         let instance = instance.clone();
         let device = instance.device();
-        let surface_info = instance.surface_info(window.inner_size());
+        let surface_info = instance.surface_info(window.size().into());
 
         // Create Render Pass
 
@@ -280,7 +280,7 @@ impl Surface {
         }
     }
 
-    pub fn rebuild(&mut self, window: &winit::window::Window) {
+    pub fn rebuild(&mut self, window: &crate::window::Window) {
         let instance = self.instance.clone();
         unsafe {
             std::mem::drop(std::ptr::read(self));
@@ -288,7 +288,9 @@ impl Surface {
         }
     }
 
-    pub fn aspect_ratio(&self) -> f32 { self.extent.width as f32 / self.extent.height as f32 }
+    pub fn aspect_ratio(&self) -> f32 {
+        self.extent.width as f32 / self.extent.height as f32
+    }
 }
 
 impl Drop for Surface {

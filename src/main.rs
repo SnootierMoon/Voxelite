@@ -1,6 +1,6 @@
 mod render;
-mod window;
 mod voxel;
+mod window;
 
 const DEBUG_MODE: bool = cfg!(debug_assertions);
 
@@ -14,7 +14,7 @@ fn main() {
     let window = window::Window::new();
 
     let instance = render::Instance::new(window.window());
-    let mut surface = render::Surface::new(instance.clone(), window.window());
+    let mut surface = render::Surface::new(instance.clone(), &window);
     let mut renderer = render::Renderer::new(&surface);
     let mut voxel_renderer = render::VoxelRenderer::new(&surface, &chunk.faces());
 
@@ -23,7 +23,7 @@ fn main() {
     window.run(move |state, window| {
         if state.quit() {
             instance.wait_idle();
-            return
+            return;
         }
 
         camera.update(state);
@@ -33,7 +33,7 @@ fn main() {
             voxel_renderer.draw(command_buffer, &matrix)
         }) {
             instance.wait_idle();
-            surface.rebuild(window.window());
+            surface.rebuild(&window);
             voxel_renderer.rebuild(&surface, &chunk.faces())
         }
     });

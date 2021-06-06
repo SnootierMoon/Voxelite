@@ -1,5 +1,5 @@
 pub struct Object {
-    chunks: std::collections::HashMap<super::ChunkCoord, super::Chunk>
+    chunks: std::collections::HashMap<super::ChunkCoord, super::Chunk>,
 }
 
 impl Object {
@@ -13,8 +13,6 @@ impl Object {
                 }
             }
         }
-        Self {
-            chunks
-        }
+        Self { chunks }
     }
 }
