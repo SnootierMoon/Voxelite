@@ -13,25 +13,28 @@ impl PlayerCamera {
 
     pub fn update(&mut self, state: &crate::window::State) {
         let mouse_rel = state.mouse_rel() / 60.;
-        self.camera.yaw += mouse_rel.x;
-        self.camera.pitch = (self.camera.pitch - mouse_rel.y).clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2);
+        self.camera.yaw = (self.camera.yaw - mouse_rel.x).rem_euclid(std::f32::consts::TAU);
+        self.camera.pitch = (self.camera.pitch - mouse_rel.y).clamp(
+            -std::f32::consts::FRAC_PI_2 + 0.0001,
+            std::f32::consts::FRAC_PI_2 - 0.0001,
+        );
         let vel = ultraviolet::Vec3::new(
-            if state.key_held(winit::event::VirtualKeyCode::D) { 1. } else { 0. } -
-            if state.key_held(winit::event::VirtualKeyCode::A) { 1. } else { 0. },
-            if state.key_held(winit::event::VirtualKeyCode::W) { 1. } else { 0. } -
-                if state.key_held(winit::event::VirtualKeyCode::S) { 1. } else { 0. },
-            if state.key_held(winit::event::VirtualKeyCode::Space) { 1. } else { 0. } -
-                if state.key_held(winit::event::VirtualKeyCode::LShift) { 1. } else { 0. }
+            (state.key_held(winit::event::VirtualKeyCode::W) as i32
+                - state.key_held(winit::event::VirtualKeyCode::S) as i32) as f32,
+            (state.key_held(winit::event::VirtualKeyCode::A) as i32
+                - state.key_held(winit::event::VirtualKeyCode::D) as i32) as f32,
+            (state.key_held(winit::event::VirtualKeyCode::Space) as i32
+                - state.key_held(winit::event::VirtualKeyCode::LShift) as i32) as f32,
         );
 
-        self.camera.pos += self.camera.move_matrix() * vel * 30. * state.frame_elapsed().as_secs_f32();
+        self.camera.pos +=
+            self.camera.move_matrix() * vel * 30. * state.frame_elapsed().as_secs_f32();
     }
 
     pub fn matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {
         self.camera.draw_matrix(vertical_fov, aspect_ratio)
     }
 }
-
 
 #[derive(Default)]
 pub struct Camera {
@@ -49,15 +52,11 @@ impl Camera {
     }
 
     fn forward(&self) -> ultraviolet::Vec3 {
-        ultraviolet::Vec3::new(self.yaw.sin(), self.yaw.cos(), 0.)
-    }
-
-    fn left(&self) -> ultraviolet::Vec3 {
-        ultraviolet::Vec3::new(-self.yaw.cos(), self.yaw.sin(), 0.)
+        ultraviolet::Vec3::new(self.yaw.cos(), self.yaw.sin(), 0.)
     }
 
     pub fn move_matrix(&self) -> ultraviolet::Mat3 {
-        ultraviolet::Mat3::from_rotation_z(-self.yaw)
+        ultraviolet::Mat3::from_rotation_z(self.yaw)
     }
 
     pub fn draw_matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {

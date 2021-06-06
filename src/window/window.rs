@@ -34,11 +34,9 @@ impl Window {
         let mut state = super::State::new();
 
         event_loop.run(move |event, _, control_flow| match event {
-            winit::event::Event::WindowEvent { event: winit::event::WindowEvent::CloseRequested, .. } => {
-                *control_flow = winit::event_loop::ControlFlow::Exit
-            },
             _ => {
                 state.handle_event(&event);
+                if state.quit() { *control_flow = winit::event_loop::ControlFlow::Exit }
                 if state.main() {
                     input_handler(&state, &self);
                     state.reset()

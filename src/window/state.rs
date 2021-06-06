@@ -39,6 +39,8 @@ impl State {
             },
             winit::event::Event::LoopDestroyed => self.quit = true,
             winit::event::Event::WindowEvent { event, ..} => match event {
+                winit::event::WindowEvent::Destroyed |
+                winit::event::WindowEvent::CloseRequested => { self.quit = true }
                 winit::event::WindowEvent::CursorMoved { position, .. } => {
                     let new_pos = ultraviolet::Vec2::new(position.x as f32, position.y as f32);
                     self.mouse_rel = new_pos - self.mouse_pos;
@@ -46,6 +48,9 @@ impl State {
                 }
                 winit::event::WindowEvent::KeyboardInput { input, .. } => {
                     if let Some(keycode) = input.virtual_keycode {
+                        if keycode == winit::event::VirtualKeyCode::Escape {
+                            self.quit = true
+                        }
                         self.key_held[keycode as usize] = input.state == winit::event::ElementState::Pressed;
                     }
                 }
