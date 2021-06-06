@@ -15,7 +15,7 @@ fn main() {
     let mut renderer = render::Renderer::new(&surface);
     let mut voxel_renderer = render::VoxelRenderer::new(&surface);
 
-    let mut camera = render::Camera::new(ultraviolet::Vec3::new(-5., 0., 0.), 0., 0.);
+    let mut camera = render::PlayerCamera::new(ultraviolet::Vec3::new(-5., 0., 0.), 0., 0.);
 
     window.run(move |state, window| {
         if state.quit() {
@@ -23,12 +23,11 @@ fn main() {
             return
         }
 
-        camera.pos_mut().x -= state.frame_elapsed().as_secs_f32();
-
+        camera.update(&state);
         let matrix = camera.matrix(45., surface.aspect_ratio());
 
         if !renderer.render(&mut surface, |command_buffer| {
-            voxel_renderer.render(command_buffer, &matrix)
+            voxel_renderer.draw(command_buffer, &matrix)
         }) {
             instance.wait_idle();
             surface.rebuild(window.window());

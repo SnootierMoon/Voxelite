@@ -148,7 +148,7 @@ impl VoxelRenderer {
         }
     }
 
-    pub fn render(&mut self, command_buffer: vk::CommandBuffer, matrix: &ultraviolet::Mat4) {
+    pub fn draw(&mut self, command_buffer: vk::CommandBuffer, matrix: &ultraviolet::Mat4) {
         let device = self.instance.device();
         unsafe {
             device.cmd_bind_pipeline(
