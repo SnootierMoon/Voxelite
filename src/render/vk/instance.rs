@@ -9,9 +9,8 @@ pub struct Instance {
     present: super::QueueInfo,
 
     // Ordered based on Rust's Struct Drop Order (Device, then Instance, then Entry)
-    // Box: https://gitlab.com/Friz64/erupt/-/commit/8f62ff07c127850378feb15bcc60cab91ca284f2
-    device: Box<erupt::DeviceLoader>,
-    instance: Box<erupt::InstanceLoader>,
+    device: erupt::DeviceLoader,
+    instance: erupt::InstanceLoader,
     #[allow(dead_code)]
     entry: erupt::DefaultEntryLoader,
 }
@@ -130,8 +129,8 @@ impl Instance {
 
         let ret = Self {
             entry,
-            instance: Box::new(instance),
-            device: Box::new(device),
+            instance,
+            device,
 
             messenger,
             surface,
