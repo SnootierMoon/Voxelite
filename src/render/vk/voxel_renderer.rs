@@ -8,22 +8,23 @@ pub struct VoxelRenderer {
 }
 
 impl VoxelRenderer {
-    const VOXEL_FRAG: &'static [u32] = vk_shader_macros::include_glsl!("src/shaders/voxel.frag");
-    const VOXEL_VERT: &'static [u32] = vk_shader_macros::include_glsl!("src/shaders/voxel.vert");
-
     pub fn new(surface: &super::Surface, faces: &[u32]) -> Self {
         let instance = surface.instance();
         let device = instance.device();
         let render_info = surface.render_info();
 
+        let vert_spv = include_shader!("voxel.vert");
+        let vert_code  = erupt::utils::decode_spv(vert_spv).unwrap();
         let vert_shader_module_create_info =
-            vk::ShaderModuleCreateInfoBuilder::new().code(Self::VOXEL_VERT);
+            vk::ShaderModuleCreateInfoBuilder::new().code(&vert_code);
         let vert_shader_module =
             unsafe { device.create_shader_module(&vert_shader_module_create_info, None) }
                 .unwrap();
 
+        let frag_spv = include_shader!("voxel.frag");
+        let frag_code = erupt::utils::decode_spv(frag_spv).unwrap();
         let frag_shader_module_create_info =
-            vk::ShaderModuleCreateInfoBuilder::new().code(Self::VOXEL_FRAG);
+            vk::ShaderModuleCreateInfoBuilder::new().code(&frag_code);
         let frag_shader_module =
             unsafe { device.create_shader_module(&frag_shader_module_create_info, None) }
                 .unwrap();
@@ -157,7 +158,7 @@ impl VoxelRenderer {
                 vk::ShaderStageFlags::VERTEX,
                 0,
                 64,
-                matrix.as_ptr() as *const std::ffi::c_void,
+                matrix.as_ptr().cast(),
             );
 
             device.cmd_bind_vertex_buffers(command_buffer, 0, &[self.mesh.vertex_buffer], &[0]);

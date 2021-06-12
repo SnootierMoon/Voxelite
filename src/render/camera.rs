@@ -1,4 +1,5 @@
-#[derive(Default)]
+use std::ops::Rem;
+
 pub struct PlayerCamera {
     camera: Camera,
 }
@@ -7,7 +8,6 @@ impl PlayerCamera {
     pub fn new(pos: ultraviolet::Vec3, yaw: f32, pitch: f32) -> Self {
         Self {
             camera: Camera::new(pos, yaw, pitch),
-            ..Default::default()
         }
     }
 
@@ -21,9 +21,7 @@ impl PlayerCamera {
     ];
 
     pub fn update(&mut self, state: &crate::window::State) {
-        let mouse_rel = state.mouse_rel() / 60.;
-        self.camera.orientation -= mouse_rel;
-        self.camera.clamp_orientation();
+        self.camera.update_orientation(state.mouse_rel() / -60.);
 
         self.camera.pos += self.camera.move_matrix()
             * state.move_vector(&Self::MOVE_KEYS)
@@ -32,11 +30,10 @@ impl PlayerCamera {
     }
 
     pub fn matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {
-        self.camera.draw_matrix(vertical_fov, aspect_ratio)
+        self.camera.view_matrix(vertical_fov, aspect_ratio)
     }
 }
 
-#[derive(Default)]
 pub struct Camera {
     pos: ultraviolet::Vec3,
     orientation: ultraviolet::Vec2, // (yaw, pitch)
@@ -67,9 +64,9 @@ impl Camera {
         ultraviolet::Mat3::from_rotation_z(self.orientation.x)
     }
 
-    pub fn draw_matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {
-        let (p_sin, p_cos) = self.orientation.y.sin_cos();
-        let look_vec = self.forward() * p_cos + Self::UP * p_sin;
+    pub fn view_matrix(&self, vertical_fov: f32, aspect_ratio: f32) -> ultraviolet::Mat4 {
+        let (sin, cos) = self.orientation.y.sin_cos();
+        let look_vec = self.forward() * cos + Self::UP * sin;
         let projection = ultraviolet::projection::perspective_infinite_z_vk(
             vertical_fov,
             aspect_ratio,
@@ -81,8 +78,10 @@ impl Camera {
 
     const X_DIR_MAX: f32 = std::f32::consts::TAU;
     const Y_DIR_MAX: f32 = std::f32::consts::FRAC_PI_2 - 0.0001;
-    pub fn clamp_orientation(&mut self) {
-        self.orientation.x = self.orientation.x.rem_euclid(Self::X_DIR_MAX);
-        self.orientation.y = self.orientation.y.clamp(-Self::Y_DIR_MAX, Self::Y_DIR_MAX)
+
+    pub fn update_orientation(&mut self, delta: ultraviolet::Vec2) {
+        self.orientation += delta;
+        self.orientation.x = self.orientation.x.rem(Self::X_DIR_MAX);
+        self.orientation.y = self.orientation.y.clamp(-Self::Y_DIR_MAX, Self::Y_DIR_MAX);
     }
 }

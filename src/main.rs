@@ -1,3 +1,4 @@
+#[macro_use] mod shaders;
 mod render;
 mod voxel;
 mod window;
@@ -33,7 +34,7 @@ fn main() {
             voxel_renderer.draw(command_buffer, &matrix)
         }) {
             instance.wait_idle();
-            surface.rebuild(&window);
+            surface.rebuild(window);
             voxel_renderer.rebuild(&surface, &chunk.faces())
         }
     });

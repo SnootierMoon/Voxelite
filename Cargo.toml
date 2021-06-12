@@ -12,4 +12,6 @@ log = "0.4.14"
 env_logger = "0.8.3"
 
 ultraviolet = "0.8.1"
-vk-shader-macros = "0.2.7"
+
+[build-dependencies]
+glsl = { version = "6.0.0", features = ["spirv"] }
