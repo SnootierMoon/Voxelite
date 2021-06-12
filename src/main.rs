@@ -13,7 +13,7 @@ fn main() {
 
     let window = window::Window::new();
 
-    let instance = render::Instance::new(window.window());
+    let instance = render::Instance::new(&window);
     let mut surface = render::Surface::new(instance.clone(), &window);
     let mut renderer = render::Renderer::new(&surface);
     let mut voxel_renderer = render::VoxelRenderer::new(&surface, &chunk.faces());

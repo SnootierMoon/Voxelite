@@ -1,4 +1,4 @@
-use erupt::{vk, ExtendableFrom};
+use erupt::{vk, ExtendableFromConst};
 
 pub struct Instance {
     messenger: vk::DebugUtilsMessengerEXT,
@@ -16,10 +16,10 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(window: &winit::window::Window) -> std::rc::Rc<Self> {
+    pub fn new(window: &crate::window::Window) -> std::rc::Rc<Self> {
         let entry = erupt::EntryLoader::new().unwrap();
         let mut instance_extensions =
-            erupt::utils::surface::enumerate_required_extensions(window).unwrap();
+            erupt::utils::surface::enumerate_required_extensions(window.window()).unwrap();
         let mut instance_layers = Vec::new();
         let device_extensions = vec![vk::KHR_SWAPCHAIN_EXTENSION_NAME];
         let mut device_layers = Vec::new();
@@ -39,9 +39,11 @@ impl Instance {
                 .enabled_extension_names(&instance_extensions)
                 .enabled_layer_names(&instance_layers)
                 .extend_from(&mut messenger_create_info);
-            let instance = erupt::InstanceLoader::new(&entry, &instance_create_info, None).unwrap();
+            let instance = unsafe {
+                erupt::InstanceLoader::new(&entry, &instance_create_info, None)
+            }.unwrap();
             let messenger = unsafe {
-                instance.create_debug_utils_messenger_ext(&messenger_create_info, None, None)
+                instance.create_debug_utils_messenger_ext(&messenger_create_info, None)
             }
             .unwrap();
             (instance, messenger)
@@ -49,14 +51,16 @@ impl Instance {
             let instance_create_info = vk::InstanceCreateInfoBuilder::new()
                 .enabled_extension_names(&instance_extensions)
                 .enabled_layer_names(&instance_layers);
-            let instance = erupt::InstanceLoader::new(&entry, &instance_create_info, None).unwrap();
+            let instance = unsafe {
+                erupt::InstanceLoader::new(&entry, &instance_create_info, None)
+            }.unwrap();
             (instance, vk::DebugUtilsMessengerEXT::null())
         };
 
         // Create Surface
 
         let surface =
-            unsafe { erupt::utils::surface::create_surface(&instance, window, None) }.unwrap();
+            unsafe { erupt::utils::surface::create_surface(&instance, window.window(), None) }.unwrap();
 
         // Find Physical Device & Queue Families
 
@@ -65,17 +69,17 @@ impl Instance {
             .into_iter()
             .filter_map(|physical_device| {
                 let properties =
-                    unsafe { instance.get_physical_device_properties(physical_device, None) };
+                    unsafe { instance.get_physical_device_properties(physical_device) };
                 let queue_families = unsafe {
                     instance.get_physical_device_queue_family_properties(physical_device, None)
                 };
+
                 let present_family = match (0..queue_families.len()).find(|&index| {
                     unsafe {
                         instance.get_physical_device_surface_support_khr(
                             physical_device,
                             index as u32,
                             surface,
-                            None,
                         )
                     }
                     .unwrap()
@@ -102,7 +106,7 @@ impl Instance {
         // Get Physical Device Memory Properties
 
         let memory_properties =
-            unsafe { instance.get_physical_device_memory_properties(physical_device, None) };
+            unsafe { instance.get_physical_device_memory_properties(physical_device) };
 
         // Create Logical Device & Queues
 
@@ -121,11 +125,11 @@ impl Instance {
             .enabled_extension_names(&device_extensions)
             .enabled_layer_names(&device_layers)
             .queue_create_infos(&queue_create_infos);
-        let device =
+        let device = unsafe {
             erupt::DeviceLoader::new(&instance, physical_device, &device_create_info, None)
-                .unwrap();
-        let graphics_queue = unsafe { device.get_device_queue(graphics_family, 0, None) };
-        let present_queue = unsafe { device.get_device_queue(present_family, 0, None) };
+        }.unwrap();
+        let graphics_queue = unsafe { device.get_device_queue(graphics_family, 0) };
+        let present_queue = unsafe { device.get_device_queue(present_family, 0) };
 
         let ret = Self {
             entry,
@@ -163,7 +167,6 @@ impl Instance {
             self.instance.get_physical_device_surface_capabilities_khr(
                 self.physical_device,
                 self.surface,
-                None,
             )
         }
         .unwrap();

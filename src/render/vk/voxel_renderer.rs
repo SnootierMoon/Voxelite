@@ -19,13 +19,13 @@ impl VoxelRenderer {
         let vert_shader_module_create_info =
             vk::ShaderModuleCreateInfoBuilder::new().code(Self::VOXEL_VERT);
         let vert_shader_module =
-            unsafe { device.create_shader_module(&vert_shader_module_create_info, None, None) }
+            unsafe { device.create_shader_module(&vert_shader_module_create_info, None) }
                 .unwrap();
 
         let frag_shader_module_create_info =
             vk::ShaderModuleCreateInfoBuilder::new().code(Self::VOXEL_FRAG);
         let frag_shader_module =
-            unsafe { device.create_shader_module(&frag_shader_module_create_info, None, None) }
+            unsafe { device.create_shader_module(&frag_shader_module_create_info, None) }
                 .unwrap();
 
         let entry_point = std::ffi::CString::new("main").unwrap();
@@ -109,7 +109,7 @@ impl VoxelRenderer {
         let layout_info =
             vk::PipelineLayoutCreateInfoBuilder::new().push_constant_ranges(&push_constant_ranges);
 
-        let layout = unsafe { device.create_pipeline_layout(&layout_info, None, None) }.unwrap();
+        let layout = unsafe { device.create_pipeline_layout(&layout_info, None) }.unwrap();
 
         let pipeline_create_info = vk::GraphicsPipelineCreateInfoBuilder::new()
             .stages(&stages)
@@ -200,9 +200,9 @@ impl VoxelMesh {
             .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
 
-        let vertex_buffer = unsafe { device.create_buffer(&buffer_info, None, None) }.unwrap();
+        let vertex_buffer = unsafe { device.create_buffer(&buffer_info, None) }.unwrap();
 
-        let requirements = unsafe { device.get_buffer_memory_requirements(vertex_buffer, None) };
+        let requirements = unsafe { device.get_buffer_memory_requirements(vertex_buffer) };
 
         let memory_type_index = instance.get_memory_type_index(
             vk::MemoryPropertyFlags::HOST_COHERENT | vk::MemoryPropertyFlags::HOST_VISIBLE,
@@ -214,7 +214,7 @@ impl VoxelMesh {
             .memory_type_index(memory_type_index);
 
         let vertex_buffer_memory =
-            unsafe { device.allocate_memory(&memory_info, None, None) }.unwrap();
+            unsafe { device.allocate_memory(&memory_info, None) }.unwrap();
 
         unsafe { device.bind_buffer_memory(vertex_buffer, vertex_buffer_memory, 0) }.unwrap();
 

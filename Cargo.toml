@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 winit = "0.25.0"
-erupt = "0.18.0"
+erupt = { git = "https://gitlab.com/Friz64/erupt", branch = "main" }
 
 log = "0.4.14"
 env_logger = "0.8.3"

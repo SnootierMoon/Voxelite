@@ -21,7 +21,7 @@ impl Renderer {
             .queue_family_index(queue.family)
             .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER);
         let command_pool =
-            unsafe { device.create_command_pool(&command_pool_create_info, None, None) }.unwrap();
+            unsafe { device.create_command_pool(&command_pool_create_info, None) }.unwrap();
 
         // Create Sync Objects
 
@@ -37,11 +37,11 @@ impl Renderer {
             .into_iter()
             .map(|command_buffer| {
                 let in_flight =
-                    unsafe { device.create_fence(&fence_create_info, None, None) }.unwrap();
+                    unsafe { device.create_fence(&fence_create_info, None) }.unwrap();
                 let image_available =
-                    unsafe { device.create_semaphore(&semaphore_create_info, None, None) }.unwrap();
+                    unsafe { device.create_semaphore(&semaphore_create_info, None) }.unwrap();
                 let render_finished =
-                    unsafe { device.create_semaphore(&semaphore_create_info, None, None) }.unwrap();
+                    unsafe { device.create_semaphore(&semaphore_create_info, None) }.unwrap();
                 super::SyncObject {
                     in_flight,
                     image_available,

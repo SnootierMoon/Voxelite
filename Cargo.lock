@@ -373,8 +373,7 @@ dependencies = [
 [[package]]
 name = "erupt"
 version = "0.18.0+174"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f344b7165d9c0fe06412c04a9b34f82bc0857e19fdba48d642b9fc8ec22ce09c"
+source = "git+https://gitlab.com/Friz64/erupt?branch=main#6ac9285c2f39b7bee4a5024aae827083aa4419a4"
 dependencies = [
  "bitflags",
  "libloading 0.7.0",

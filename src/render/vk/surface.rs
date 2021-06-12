@@ -70,7 +70,7 @@ impl Surface {
             .subpasses(std::slice::from_ref(&subpass))
             .dependencies(std::slice::from_ref(&dependency));
         let render_pass =
-            unsafe { device.create_render_pass(&render_pass_create_info, None, None) }.unwrap();
+            unsafe { device.create_render_pass(&render_pass_create_info, None) }.unwrap();
 
         // Create Swapchain
 
@@ -99,7 +99,7 @@ impl Surface {
             .present_mode(surface_info.present_mode)
             .clipped(true);
         let swapchain =
-            unsafe { device.create_swapchain_khr(&swapchain_create_info, None, None) }.unwrap();
+            unsafe { device.create_swapchain_khr(&swapchain_create_info, None) }.unwrap();
 
         // Create Depth Image Resources
 
@@ -118,16 +118,16 @@ impl Surface {
             .usage(vk::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT)
             .samples(vk::SampleCountFlagBits::_1)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let depth_image = unsafe { device.create_image(&image_create_info, None, None) }.unwrap();
+        let depth_image = unsafe { device.create_image(&image_create_info, None) }.unwrap();
         let memory_requirements =
-            unsafe { device.get_image_memory_requirements(depth_image, None) };
+            unsafe { device.get_image_memory_requirements(depth_image) };
         let memory_type_index = instance
             .get_memory_type_index(vk::MemoryPropertyFlags::DEVICE_LOCAL, memory_requirements);
         let memory_allocate_info = vk::MemoryAllocateInfoBuilder::new()
             .allocation_size(memory_requirements.size)
             .memory_type_index(memory_type_index);
         let depth_image_memory =
-            unsafe { device.allocate_memory(&memory_allocate_info, None, None) }.unwrap();
+            unsafe { device.allocate_memory(&memory_allocate_info, None) }.unwrap();
         unsafe { device.bind_image_memory(depth_image, depth_image_memory, 0) }.unwrap();
         let image_view_create_info = vk::ImageViewCreateInfoBuilder::new()
             .image(depth_image)
@@ -141,7 +141,7 @@ impl Surface {
                 layer_count: 1,
             });
         let depth_image_view =
-            unsafe { device.create_image_view(&image_view_create_info, None, None) }.unwrap();
+            unsafe { device.create_image_view(&image_view_create_info, None) }.unwrap();
 
         // Create Swapchain Image Resources and Framebuffers
 
@@ -161,7 +161,7 @@ impl Surface {
                         layer_count: 1,
                     });
                 let view =
-                    unsafe { device.create_image_view(&view_create_info, None, None) }.unwrap();
+                    unsafe { device.create_image_view(&view_create_info, None) }.unwrap();
                 let attachments = [view, depth_image_view];
                 let framebuffer_create_info = vk::FramebufferCreateInfoBuilder::new()
                     .render_pass(render_pass)
@@ -170,7 +170,7 @@ impl Surface {
                     .height(surface_info.extent.height)
                     .layers(1);
                 let framebuffer =
-                    unsafe { device.create_framebuffer(&framebuffer_create_info, None, None) }
+                    unsafe { device.create_framebuffer(&framebuffer_create_info, None) }
                         .unwrap();
                 SwapchainImage {
                     view,
@@ -210,7 +210,6 @@ impl Surface {
                 self.swapchain,
                 u64::MAX,
                 Some(sync.image_available),
-                None,
                 None,
             )
         }
