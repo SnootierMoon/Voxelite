@@ -12,7 +12,7 @@ pub struct Instance {
     device: erupt::DeviceLoader,
     instance: erupt::InstanceLoader,
     #[allow(dead_code)]
-    entry: erupt::DefaultEntryLoader,
+    entry: erupt::EntryLoader,
 }
 
 impl Instance {
